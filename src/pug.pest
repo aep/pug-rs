@@ -11,14 +11,14 @@ id          =  { "#" ~ identifier }
 element     =  { identifier }
 value       =  { string1 | string2 }
 string1     = _{ "'" ~ inner1 ~ "'" }
-inner1      = _{ char1* }
+inner1      =  { char1* }
 char1 = {
     !("'" | "\\") ~ ANY
     | "\\" ~ ("'" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
     | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
 }
 string2     = _{ "\"" ~ inner2 ~ "\"" }
-inner2      = _{ char2* }
+inner2      =  { char2* }
 char2 = _{
     !("\"" | "\\") ~ ANY
     | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")

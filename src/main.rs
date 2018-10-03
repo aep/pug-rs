@@ -58,8 +58,14 @@ fn parse(mut file: String) -> Result<String, Error<Rule>> {
                             for e in e.into_inner() {
                                 let mut e = e.into_inner();
                                 let key   = e.next().unwrap().as_str();
-                                let value = e.next().unwrap().as_str();
-                                attrs.push(format!("{}={}", key,value));
+                                let value = e.next().unwrap();
+                                if key == "id" {
+                                    id = Some(value.into_inner().next().unwrap().as_str().to_string());
+                                } else if key == "class" {
+                                    class.push(value.into_inner().next().unwrap().as_str().to_string());
+                                } else {
+                                    attrs.push(format!("{}={}", key, value.as_str()));
+                                }
                             }
                         },
                         _ => unreachable!(),
@@ -104,6 +110,14 @@ fn main() {
     io::stdin().read_to_string(&mut buffer).unwrap();
     let html = parse(buffer).unwrap();
     println!("{}", html);
+}
+
+
+#[test]
+pub fn dupclass() {
+    let html = parse(r#"a#x.b(id="v" class="c")"#.to_string()).unwrap();
+    assert_eq!(html,r#"<a class="b c" id="v"></a>"#);
+
 }
 
 

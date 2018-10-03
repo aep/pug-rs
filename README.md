@@ -15,3 +15,32 @@ usage:
 $ cargo install pug
 $ pug < thing.pug > thing.html
 ```
+
+
+with webpack:
+------------
+
+
+pug_loader.js:
+```javascript
+const spawnSync = require('child_process').spawnSync;
+module.exports = function(source) {
+  var proc = spawnSync("pug", {
+    input: source
+  });
+  if (proc.status != 0) {
+    throw proc.error;
+  }
+  return proc.stdout.toString();
+}
+```
+
+```
+  module: {
+    rules: [
+      {
+        test: /\.pug$/,
+        use: [require.resolve('./pug_loader.js')]
+      },
+
+```
