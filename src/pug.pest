@@ -1,6 +1,7 @@
 ws1         = _{ (" " | "\t") }
 ws          = _{ ws1 * }
-wsnl        = _{ ( ws1 | "\n")* }
+wsnl1       = _{ ws1 | "\n" }
+wsnl        = _{ wsnl1* }
 identifier   =  {
     (ASCII_ALPHANUMERIC | "_" | "/" ) ~
     (ASCII_ALPHANUMERIC | "_" | "/" | "-" ) *
@@ -38,8 +39,8 @@ decl        =  _{
     indent ~
     ( comment |
       plaintext |
-      tag ~ ( ws1+ ~ text?)? )? ~
+      tag ~ ( ws1+ ~ text?)? ) ~
     ("\n")
 }
-
-file = { SOI ~ decl*  ~ EOI }
+emptyline = _{ ws1* ~ "\n" }
+file = { SOI ~ (decl | emptyline )*  ~ EOI }

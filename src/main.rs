@@ -13,7 +13,6 @@ pub struct PugParser;
 
 fn parse(mut file: String) -> Result<String, Error<Rule>> {
     file.push('\n');
-    file.push('\n');
     let file = PugParser::parse(Rule::file, &file)?.next().unwrap().into_inner();
 
 
@@ -123,6 +122,11 @@ fn parse(mut file: String) -> Result<String, Error<Rule>> {
                 previous_was_text = true;
             },
             Rule::EOI => {
+                for (_,element) in tagstack.drain(..).rev() {
+                    html.push_str("</");
+                    html.push_str(&element);
+                    html.push_str(">");
+                }
             },
             any => panic!(println!("parser bug. did not expect: {:?}", any)),
         }
@@ -138,6 +142,19 @@ fn main() {
     println!("{}", html);
 }
 
+
+#[test]
+pub fn emptyline() {
+    let html = parse(
+r#"
+a
+  b
+
+  c
+
+"#.to_string()).unwrap();
+    assert_eq!(html,r#"<a><b></b><c></c></a>"#);
+}
 
 #[test]
 pub fn dupclass() {

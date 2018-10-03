@@ -1,6 +1,6 @@
 [package]
 name = "pug"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Arvid E. Picciani <aep@exys.org>"]
 license = "MIT"
 description = "pug.js reimplemented in rust for speed"
