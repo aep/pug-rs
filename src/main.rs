@@ -19,13 +19,23 @@ fn parse(mut file: String) -> Result<String, Error<Rule>> {
 
     let mut html = String::new();
 
+    let mut previous_was_text = false;
+    let mut comment  = None;
     let mut indent   = 0;
-    let mut tagstack  : Vec<(usize, String)>  = Vec::new();
+    let mut tagstack : Vec<(usize, String)>  = Vec::new();
 
     for decl in file {
         match decl.as_rule() {
             Rule::indent => {
                 indent = decl.as_str().len();
+
+                if let Some(ind) = comment {
+                    if indent > ind {
+                        continue;
+                    } else {
+                        comment = None;
+                    }
+                }
 
                 while let Some((ind, element)) = tagstack.last().cloned() {
                     if ind >= indent {
@@ -39,6 +49,11 @@ fn parse(mut file: String) -> Result<String, Error<Rule>> {
                 }
             },
             Rule::tag => {
+                if let Some(_) = comment {
+                    continue;
+                }
+                previous_was_text = false;
+
                 let mut element = "div".to_string();
                 let mut id      = None;
                 let mut class   = Vec::new();
@@ -92,9 +107,20 @@ fn parse(mut file: String) -> Result<String, Error<Rule>> {
                 tagstack.push((indent, element));
             },
             Rule::comment => {
+                if let Some(_) = comment {
+                    continue;
+                }
+                comment = Some(indent);
             },
             Rule::text => {
+                if let Some(_) = comment {
+                    continue;
+                }
+                if previous_was_text {
+                    html.push('\n')
+                }
                 html.push_str(decl.as_str());
+                previous_was_text = true;
             },
             Rule::EOI => {
             },
@@ -117,7 +143,23 @@ fn main() {
 pub fn dupclass() {
     let html = parse(r#"a#x.b(id="v" class="c")"#.to_string()).unwrap();
     assert_eq!(html,r#"<a class="b c" id="v"></a>"#);
+}
 
+#[test]
+pub fn preserve_newline_in_multiline_text() {
+    let html = parse(
+r#"pre
+  | The pipe always goes at the beginning of its own line,
+  | not counting indentation.
+  |   lol look at me
+  |   getting all getho indent
+  |     watt"#.to_string()).unwrap();
+    assert_eq!(html,
+r#"<pre>The pipe always goes at the beginning of its own line,
+not counting indentation.
+  lol look at me
+  getting all getho indent
+    watt</pre>"#);
 }
 
 
