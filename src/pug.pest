@@ -1,0 +1,45 @@
+ws1         = _{ (" " | "\t") }
+ws          = _{ ws1 * }
+wsnl        = _{ ( ws1 | "\n")* }
+identifier   =  {
+    (ASCII_ALPHANUMERIC | "_" | "/" ) ~
+    (ASCII_ALPHANUMERIC | "_" | "/" | "-" ) *
+    }
+indent      =  { " " * }
+class       =  { "." ~ identifier }
+id          =  { "#" ~ identifier }
+element     =  { identifier }
+value       =  { string1 | string2 }
+string1     = _{ "'" ~ inner1 ~ "'" }
+inner1      = _{ char1* }
+char1 = {
+    !("'" | "\\") ~ ANY
+    | "\\" ~ ("'" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+string2     = _{ "\"" ~ inner2 ~ "\"" }
+inner2      = _{ char2* }
+char2 = _{
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+attr        =  { identifier ~ ws ~ "=" ~ ws ~ value ~ wsnl ~ ","? ~ wsnl}
+attrs       =  { ( "(" ~ wsnl ~ attr * ~ wsnl ~ ")" ) }
+tag         =  {
+    (class | id | element)  ~
+    (class | id )  * ~
+    attrs ?
+}
+text        =  { (!("\n") ~ ANY)+ }
+plaintext   =  _{ "|" ~ ws1? ~ text } 
+comment     =  { "//" ~ text }
+decl        =  _{
+    indent ~
+    ( comment |
+      plaintext |
+      tag ~ ( ws1+ ~ text?)? )? ~
+    ("\n")
+}
+
+file = { SOI ~ decl*  ~ EOI }
