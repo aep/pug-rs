@@ -3,7 +3,7 @@ ws          = _{ ws1 * }
 wsnl1       = _{ ws1 | "\n" }
 wsnl        = _{ wsnl1* }
 identifier   =  {
-    (ASCII_ALPHANUMERIC | "_" | "/" ) ~
+    (ASCII_ALPHANUMERIC) ~
     (ASCII_ALPHANUMERIC | "_" | "/" | "-" ) *
     }
 indent      =  { " " * }
@@ -25,7 +25,11 @@ char2 = _{
     | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
     | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
 }
-attr        =  { identifier ~ ws ~ "=" ~ ws ~ value ~ wsnl ~ ","? ~ wsnl}
+attr_name =  {
+    (ASCII_ALPHANUMERIC) ~
+    (ASCII_ALPHANUMERIC | ":" | "." | "_" | "/" | "-" ) *
+    }
+attr        =  { attr_name ~ ws ~ "=" ~ ws ~ value ~ wsnl ~ ","? ~ wsnl}
 attrs       =  { ( "(" ~ wsnl ~ attr * ~ wsnl ~ ")" ) }
 tag         =  {
     (class | id | element)  ~

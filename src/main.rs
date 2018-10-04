@@ -144,6 +144,16 @@ fn main() {
 
 
 #[test]
+pub fn valid_identitifer_characters() {
+    let html = parse(r#"a(a="b",a-:.b.="c"
+x="y")"#.to_string()).unwrap();
+    assert_eq!(html,r#"<a a="b" a-:.b.="c" x="y"></a>"#);
+}
+
+
+
+
+#[test]
 pub fn emptyline() {
     let html = parse(
 r#"
