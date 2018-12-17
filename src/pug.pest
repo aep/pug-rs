@@ -4,7 +4,7 @@ wsnl1       = _{ ws1 | "\n" }
 wsnl        = _{ wsnl1* }
 identifier   =  {
     (ASCII_ALPHANUMERIC) ~
-    (ASCII_ALPHANUMERIC | "_" | "/" | "-" ) *
+    (ASCII_ALPHANUMERIC | "_" | "/" | "-" | ":" ) *
     }
 indent      =  { " " * }
 class       =  { "." ~ identifier }
