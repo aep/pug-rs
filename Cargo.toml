@@ -2,6 +2,7 @@
 name = "pug"
 version = "0.1.8"
 authors = ["Arvid E. Picciani <aep@exys.org>"]
+edition = '2018'
 license = "MIT"
 description = "pug.js reimplemented in rust for speed"
 repository = "https://github.com/aep/pug-rs"
@@ -9,6 +10,12 @@ readme = "README.md"
 keywords = ["pug", "jade", "template"]
 categories = ["command-line-utilities", "parsing", "web-programming"]
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
-pest = "2.0"
-pest_derive = "2.0"
+pest = "2.1"
+pest_derive = "2.1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
