@@ -1,7 +1,9 @@
 #[macro_use]
 extern crate pest_derive;
 
-use pest::error::Error;
+pub use pest::error::Error;
+pub use pest::RuleType;
+
 use pest::Parser;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
