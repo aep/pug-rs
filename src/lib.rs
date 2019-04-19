@@ -57,6 +57,10 @@ fn generate(file: &str) -> Result<String, Error<Rule>> {
                 let mut attrs = Vec::new();
                 for e in decl.into_inner() {
                     match e.as_rule() {
+                        Rule::doctype => {
+                            element = "doctype".to_string();
+                            id      = Some(e.into_inner().as_str().to_string());
+                        }
                         Rule::element => {
                             element = e.as_str().to_string();
                         }
@@ -88,6 +92,16 @@ fn generate(file: &str) -> Result<String, Error<Rule>> {
                     }
                 }
 
+
+                if element == "doctype" {
+                    html.push_str("<!DOCTYPE ");
+                    if let Some(id) = id {
+                        html.push_str(&id);
+                    }
+                    html.push('>');
+                    continue;
+                }
+
                 html.push('<');
                 html.push_str(&element);
                 if !class.is_empty() {
@@ -105,7 +119,10 @@ fn generate(file: &str) -> Result<String, Error<Rule>> {
                     html.push_str(&attr);
                 }
                 html.push('>');
-                tagstack.push((indent, element));
+
+                if !is_void_element(&element) {
+                    tagstack.push((indent, element));
+                }
             }
             Rule::comment => {
                 if comment.is_some() {
@@ -135,6 +152,13 @@ fn generate(file: &str) -> Result<String, Error<Rule>> {
     }
 
     Ok(html)
+}
+
+fn is_void_element(e: &str) -> bool {
+    match e {
+        "area"|"base"|"br"|"col"|"command"|"embed"|"hr"|"img"|"input"|"keygen"|"link"|"meta"|"param"|"source"|"track"|"wbr" => true,
+        _ => false
+    }
 }
 
 /// Render a Pug template into html.
@@ -251,3 +275,45 @@ derp
     r#"<body class="herp derp" id="blorp"><a href="google.de"></a></body><derp><yorlo>jaja</yorlo></derp>"#
     );
 }
+
+#[test]
+pub fn doctype() {
+    let html = parse(
+        r#"doctype html
+html
+  body
+"#
+            .to_string(),
+    )
+    .unwrap();
+    assert_eq!(
+        html,
+        r#"<!DOCTYPE html><html><body></body></html>"#
+    );
+}
+
+#[test]
+pub fn voidelements() {
+    let html = parse(
+        r#"
+doctype html
+html
+    head(lang="en")
+        meta(charset="utf-8")
+        title n1's personal site
+        link(rel="stylesheet", href="normalize.css")
+        link(rel="stylesheet", href="style.css")
+
+    body
+        .container
+"#
+            .to_string(),
+    )
+    .unwrap();
+    assert_eq!(
+        html,
+        r#"<!DOCTYPE html><html><head lang="en"><meta charset="utf-8"><title>n1's personal site</title><link rel="stylesheet" href="normalize.css"><link rel="stylesheet" href="style.css"></head><body><div class="container"></div></body></html>"#
+    );
+}
+
+

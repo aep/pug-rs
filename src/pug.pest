@@ -31,8 +31,9 @@ attr_name =  {
     }
 attr        =  { attr_name ~ ws ~ "=" ~ ws ~ value ~ wsnl ~ ","? ~ wsnl}
 attrs       =  { ( "(" ~ wsnl ~ attr * ~ wsnl ~ ")" ) }
+doctype     =  {"doctype" ~ wsnl ~ identifier}
 tag         =  {
-    (class | id | element)  ~
+    (doctype | class | id | element )  ~
     (class | id )  * ~
     attrs ?
 }
@@ -48,3 +49,5 @@ decl        =  _{
 }
 emptyline = _{ ws1* ~ "\n" }
 file = { SOI ~ (decl | emptyline )*  ~ EOI }
+
+
