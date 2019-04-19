@@ -1,6 +1,6 @@
 [package]
 name = "pug"
-version = "0.1.10"
+version = "0.2.1"
 authors = ["Arvid E. Picciani <aep@exys.org>"]
 edition = '2018'
 license = "MIT"

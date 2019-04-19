@@ -1,10 +1,22 @@
 #[macro_use]
 extern crate pest_derive;
 
-pub use pest::error::Error;
+use std::fmt::Debug;
 pub use pest::RuleType;
-
 use pest::Parser;
+
+#[derive(Debug)]
+pub enum Error<E> {
+    Parser(pest::error::Error<Rule>),
+    Include(E)
+}
+
+impl<E: Debug> From<pest::error::Error<Rule>> for Error<E> {
+    fn from(e : pest::error::Error<Rule>) -> Self {
+        Error::Parser(e)
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -12,7 +24,7 @@ use wasm_bindgen::prelude::*;
 #[grammar = "pug.pest"]
 pub struct PugParser;
 
-fn generate(file: &str) -> Result<String, Error<Rule>> {
+fn generate<E: Debug, F: FnMut(&str) -> Result<String, E>>  (file: &str, mut inc: F) -> Result<String, Error<E>> {
     let mut file = PugParser::parse(Rule::file, file)?;
     let mut html = String::new();
 
@@ -45,6 +57,17 @@ fn generate(file: &str) -> Result<String, Error<Rule>> {
                     }
                 }
             }
+            Rule::include => {
+                match inc(decl.into_inner().as_str()) {
+                    Err(e) => return Err(Error::Include(e)),
+                    Ok(v) => html.push_str(&v),
+                };
+            }
+            Rule::doctype => {
+                html.push_str("<!DOCTYPE ");
+                html.push_str(decl.into_inner().as_str());
+                html.push('>');
+            }
             Rule::tag => {
                 if comment.is_some() {
                     continue;
@@ -57,10 +80,6 @@ fn generate(file: &str) -> Result<String, Error<Rule>> {
                 let mut attrs = Vec::new();
                 for e in decl.into_inner() {
                     match e.as_rule() {
-                        Rule::doctype => {
-                            element = "doctype".to_string();
-                            id      = Some(e.into_inner().as_str().to_string());
-                        }
                         Rule::element => {
                             element = e.as_str().to_string();
                         }
@@ -92,15 +111,6 @@ fn generate(file: &str) -> Result<String, Error<Rule>> {
                     }
                 }
 
-
-                if element == "doctype" {
-                    html.push_str("<!DOCTYPE ");
-                    if let Some(id) = id {
-                        html.push_str(&id);
-                    }
-                    html.push('>');
-                    continue;
-                }
 
                 html.push('<');
                 html.push_str(&element);
@@ -163,10 +173,9 @@ fn is_void_element(e: &str) -> bool {
 
 /// Render a Pug template into html.
 #[cfg(not(target_arch = "wasm32"))]
-pub fn parse(mut file: String) -> Result<String, Error<Rule>> {
+pub fn parse<E : Debug, F: FnMut(&str) -> Result<String, E>>  (mut file: String, inc: F) -> Result<String, Error<E>> {
     file.push('\n');
-
-    generate(&file)
+    generate(&file, inc)
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -183,7 +192,7 @@ pub fn valid_identitifer_characters() {
         r#"a(a="b",a-:.b.="c"
 x="y")"#
             .to_string(),
-    )
+    |_|Err(0))
     .unwrap();
     assert_eq!(html, r#"<a a="b" a-:.b.="c" x="y"></a>"#);
 }
@@ -199,14 +208,14 @@ a
 
 "#
         .to_string(),
-    )
+    |_|Err(0))
     .unwrap();
     assert_eq!(html, r#"<a><b></b><c></c></a>"#);
 }
 
 #[test]
 pub fn dupclass() {
-    let html = parse(r#"a#x.b(id="v" class="c")"#.to_string()).unwrap();
+    let html = parse(r#"a#x.b(id="v" class="c")"#.to_string(), |_|Err(0)).unwrap();
     assert_eq!(html, r#"<a class="b c" id="v"></a>"#);
 }
 
@@ -220,7 +229,7 @@ pub fn preserve_newline_in_multiline_text() {
   |   getting all getho indent
   |     watt"#
             .to_string(),
-    )
+    |_|Err(0))
     .unwrap();
     assert_eq!(
         html,
@@ -240,7 +249,7 @@ pub fn eoi() {
 derp
   yorlo jaja"#
             .to_string(),
-    )
+    |_|Err(0))
     .unwrap();
     assert_eq!(html,
     r#"<body class="herp derp" id="blorp"><a href="google.de"></a></body><derp><yorlo>jaja</yorlo></derp>"#
@@ -253,7 +262,7 @@ derp
   yorlo jaja
   "#
         .to_string(),
-    )
+    |_|Err(0))
     .unwrap();
     assert_eq!(html,
     r#"<body class="herp derp" id="blorp"><a href="google.de"></a></body><derp><yorlo>jaja</yorlo></derp>"#
@@ -269,7 +278,7 @@ derp
 
 "#
         .to_string(),
-    )
+    |_|Err(0))
     .unwrap();
     assert_eq!(html,
     r#"<body class="herp derp" id="blorp"><a href="google.de"></a></body><derp><yorlo>jaja</yorlo></derp>"#
@@ -284,7 +293,7 @@ html
   body
 "#
             .to_string(),
-    )
+    |_|Err(0))
     .unwrap();
     assert_eq!(
         html,
@@ -308,11 +317,29 @@ html
         .container
 "#
             .to_string(),
-    )
+    |_|Err(0))
     .unwrap();
     assert_eq!(
         html,
         r#"<!DOCTYPE html><html><head lang="en"><meta charset="utf-8"><title>n1's personal site</title><link rel="stylesheet" href="normalize.css"><link rel="stylesheet" href="style.css"></head><body><div class="container"></div></body></html>"#
+    );
+}
+
+
+#[test]
+pub fn include () {
+    let html = parse::<String, _>(
+        r#"
+doctype html
+kebab
+    include salad
+"#
+            .to_string(),
+    |_|Ok("tomato".to_string()))
+    .unwrap();
+    assert_eq!(
+        html,
+        r#"<!DOCTYPE html><kebab>tomato</kebab>"#
     );
 }
 
