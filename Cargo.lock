@@ -112,7 +112,7 @@ dependencies = [
 
 [[package]]
 name = "pug"
-version = "0.1.10"
+version = "0.2.1"
 dependencies = [
  "pest 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pest_derive 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

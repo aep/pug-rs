@@ -31,8 +31,9 @@ attr_name =  {
     }
 attr        =  { attr_name ~ ws ~ "=" ~ ws ~ value ~ wsnl ~ ","? ~ wsnl}
 attrs       =  { ( "(" ~ wsnl ~ attr * ~ wsnl ~ ")" ) }
-doctype     =  {"doctype" ~ ws ~ attr_name}
-include     =  {"include" ~ ws ~ attr_name }
+anystr      =  {(ASCII_ALPHANUMERIC | ":" | "." | "_" | "/" | "-" ) *}
+doctype     =  {"doctype" ~ ws ~ anystr}
+include     =  {"include" ~ ws ~ anystr }
 tag         =  {
     (class | id | element )  ~
     (class | id )  * ~
