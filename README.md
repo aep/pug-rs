@@ -1,3 +1,10 @@
+DED
+====================
+
+since i no longer work with rust, this crate is canceled as well.
+it is failry simple anyway and i i ever work with pug/jade again, i'll probably reimplement it in zetz.
+
+
 pug (jade) templates
 ---------------------
 
